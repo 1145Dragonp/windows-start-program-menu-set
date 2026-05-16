@@ -5,7 +5,30 @@
 
 import subprocess
 import os
+import sys
 from pathlib import Path
+
+
+def is_admin():
+    """检查是否以管理员权限运行"""
+    try:
+        return os.getuid() == 0
+    except AttributeError:
+        # Windows
+        import ctypes
+        return ctypes.windll.shell32.IsUserAnAdmin() != 0
+
+
+def run_as_admin():
+    """重新以管理员权限运行程序"""
+    import ctypes
+    import sys
+    if not is_admin():
+        # 重新启动程序并请求管理员权限
+        ctypes.windll.shell32.ShellExecuteW(
+            None, "runas", sys.executable, " ".join(sys.argv), None, 1
+        )
+        sys.exit()
 
 
 class StartMenuManager:
@@ -46,6 +69,10 @@ class StartMenuManager:
             folder_path: 文件夹路径(相对于开始菜单根目录)
             for_all_users: 是否为所有用户创建
         """
+        # 如果是所有用户操作且没有管理员权限，提示用户
+        if for_all_users and not is_admin():
+            return False, "错误: 创建所有用户的快捷方式需要管理员权限。请以管理员身份运行程序。"
+        
         # 确定保存路径
         base_path = self.all_users_path if for_all_users else self.current_user_path
         if folder_path:
@@ -97,6 +124,10 @@ class StartMenuManager:
             parent_path: 父文件夹路径(相对于开始菜单根目录)
             for_all_users: 是否为所有用户创建
         """
+        # 如果是所有用户操作且没有管理员权限，提示用户
+        if for_all_users and not is_admin():
+            return False, "错误: 创建所有用户的文件夹需要管理员权限。请以管理员身份运行程序。"
+        
         base_path = self.all_users_path if for_all_users else self.current_user_path
         if parent_path:
             folder_path = base_path / parent_path / folder_name
@@ -107,6 +138,8 @@ class StartMenuManager:
             folder_path.mkdir(parents=True, exist_ok=True)
             scope = "所有用户" if for_all_users else "当前用户"
             return True, f"成功创建文件夹: {folder_name} ({scope})"
+        except PermissionError:
+            return False, "错误: 权限不足。创建所有用户的项目需要管理员权限。"
         except Exception as e:
             return False, f"创建文件夹失败: {str(e)}"
     
@@ -120,6 +153,10 @@ class StartMenuManager:
             folder_path: 项目所在文件夹路径
             for_all_users: 是否从所有用户删除
         """
+        # 如果是所有用户操作且没有管理员权限，提示用户
+        if for_all_users and not is_admin():
+            return False, "错误: 删除所有用户的项目需要管理员权限。请以管理员身份运行程序。"
+        
         base_path = self.all_users_path if for_all_users else self.current_user_path
         if folder_path:
             item_path = base_path / folder_path / (item_name if is_folder else f"{item_name}.lnk")
@@ -146,6 +183,8 @@ class StartMenuManager:
             scope = "所有用户" if for_all_users else "当前用户"
             item_type = "文件夹" if is_folder else "快捷方式"
             return True, f"成功删除{item_type}: {item_name} ({scope})"
+        except PermissionError:
+            return False, "错误: 权限不足。删除所有用户的项目需要管理员权限。"
         except Exception as e:
             return False, f"删除失败: {str(e)}"
     

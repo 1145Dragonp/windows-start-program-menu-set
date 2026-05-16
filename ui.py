@@ -11,6 +11,7 @@ from PyQt6.QtCore import Qt, QSize
 from PyQt6.QtGui import QIcon
 import os
 from pathlib import Path
+from core import is_admin
 
 
 class StartMenuUI(QMainWindow):
@@ -24,6 +25,7 @@ class StartMenuUI(QMainWindow):
         self.selected_item_type = ""    # 当前选中的项目类型
         self.init_ui()
         self.refresh_menu_tree()
+        self.update_permission_status()
     
     def init_ui(self):
         """初始化用户界面"""
@@ -34,6 +36,10 @@ class StartMenuUI(QMainWindow):
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
         main_layout = QVBoxLayout(central_widget)
+        
+        # 权限状态显示
+        self.permission_label = QLabel()
+        main_layout.addWidget(self.permission_label)
         
         # 范围选择
         scope_group = QGroupBox("应用范围")
@@ -61,6 +67,15 @@ class StartMenuUI(QMainWindow):
         
         # 状态栏
         self.statusBar().showMessage("就绪")
+    
+    def update_permission_status(self):
+        """更新权限状态显示"""
+        if is_admin():
+            self.permission_label.setText("✅ 当前以管理员权限运行 - 可以操作所有用户和当前用户的项目")
+            self.permission_label.setStyleSheet("color: green; font-weight: bold;")
+        else:
+            self.permission_label.setText("⚠️ 当前权限不足 - 所有用户操作需要管理员权限")
+            self.permission_label.setStyleSheet("color: orange; font-weight: bold;")
     
     def create_browse_tab(self):
         """创建浏览菜单标签页"""
@@ -301,6 +316,18 @@ class StartMenuUI(QMainWindow):
         folder_path = self.shortcut_folder_combo.currentText().strip()
         for_all_users = not self.current_user_scope  # 注意：current_user_scope=False 表示所有用户
         
+        # 检查权限
+        if for_all_users and not is_admin():
+            reply = QMessageBox.question(
+                self, "权限不足", 
+                "创建所有用户的快捷方式需要管理员权限。\n是否要重新以管理员身份运行程序？",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                from core import run_as_admin
+                run_as_admin()
+            return
+        
         success, message = self.manager.create_shortcut(
             name=name,
             target_path=target,
@@ -327,6 +354,18 @@ class StartMenuUI(QMainWindow):
         
         parent_path = self.parent_folder_combo.currentText().strip()
         for_all_users = not self.current_user_scope  # 注意：current_user_scope=False 表示所有用户
+        
+        # 检查权限
+        if for_all_users and not is_admin():
+            reply = QMessageBox.question(
+                self, "权限不足", 
+                "创建所有用户的文件夹需要管理员权限。\n是否要重新以管理员身份运行程序？",
+                QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+            )
+            if reply == QMessageBox.StandardButton.Yes:
+                from core import run_as_admin
+                run_as_admin()
+            return
         
         success, message = self.manager.create_folder(
             folder_name=folder_name,
@@ -367,6 +406,18 @@ class StartMenuUI(QMainWindow):
                 actual_item_name = self.selected_item_path
             
             for_all_users = not self.current_user_scope  # 注意：current_user_scope=False 表示所有用户
+            
+            # 检查权限
+            if for_all_users and not is_admin():
+                confirm_reply = QMessageBox.question(
+                    self, "权限不足", 
+                    "删除所有用户的项目需要管理员权限。\n是否要重新以管理员身份运行程序？",
+                    QMessageBox.StandardButton.Yes | QMessageBox.StandardButton.No
+                )
+                if confirm_reply == QMessageBox.StandardButton.Yes:
+                    from core import run_as_admin
+                    run_as_admin()
+                return
             
             success, message = self.manager.remove_item(
                 item_name=actual_item_name,

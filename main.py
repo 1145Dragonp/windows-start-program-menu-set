@@ -7,7 +7,7 @@ import sys
 import os
 from PyQt6.QtWidgets import QApplication
 from PyQt6.QtGui import QIcon
-from core import StartMenuManager
+from core import StartMenuManager, is_admin, run_as_admin
 from ui import StartMenuUI
 
 
@@ -23,6 +23,11 @@ def resource_path(relative_path):
 
 def main():
     """主函数"""
+    # 自动提权 - 无文本提示
+    if not is_admin():
+        run_as_admin()
+        return
+    
     # 创建 Qt 应用
     app = QApplication(sys.argv)
     

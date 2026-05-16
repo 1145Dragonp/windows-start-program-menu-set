@@ -1,0 +1,33 @@
+# UTF-8
+#
+# 用于 PyInstaller 的版本信息文件
+#
+
+VSVersionInfo(
+  ffi=FixedFileInfo(
+    filevers=(1, 0, 0, 0),
+    prodvers=(1, 0, 0, 0),
+    mask=0x3f,
+    flags=0x0,
+    OS=0x40004,
+    fileType=0x1,
+    subtype=0x0,
+    date=(0, 0)
+  ),
+  kids=[
+    StringFileInfo([
+      StringTable(
+        u'040904B0',
+        [StringStruct(u'CompanyName', u'personage'),
+         StringStruct(u'FileDescription', u'Windows 开始菜单管理工具'),
+         StringStruct(u'FileVersion', u'2.0.0.0'),
+         StringStruct(u'InternalName', u'StartMenuManager'),
+         StringStruct(u'LegalCopyright', u'(C) 2026 Mrmagicdragon '),
+         StringStruct(u'OriginalFilename', u'StartMenuManager.exe'),
+         StringStruct(u'ProductName', u'开始菜单管理工具'),
+         StringStruct(u'ProductVersion', u'2.0.0.0'),
+         StringStruct(u'Author', u'Mrmagicdragon')])
+    ]),
+    VarFileInfo([VarStruct(u'Translation', [1033, 1200])])
+  ]
+)
